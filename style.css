@@ -1,0 +1,9 @@
+/* Add the styles for the AI button */
+.chatgpt-ai-button{margin-left:-25px;border-radius: 30px;
+    background-color: black;
+    color: white;
+    border-style: dotted;}
+
+.chatgpt-ai-button:hover{background-color: white;
+    color: black;
+    border-style: solid;}
