@@ -1,6 +1,8 @@
 let COMMAND_PREFIX = 'gptCommand';
 let SUBMIT_KEY = 'commentCommand';
 
+// utils
+const getTextContent = (el) => el.value || el.textContent;
 
 function processCommand(inputElement, command, options, calledByAIButton = false) {
   const query = COMMAND_PREFIX + ': ' + (command !== undefined ? command.trim() : (inputElement.value.trim() !== '' ? inputElement.value.trim() : ''));
@@ -52,20 +54,20 @@ function attachKeyListener(element) {
 
 // New function to replace the existing event listener
 function handleKeyDown(event) {
-   if (event.key === 'Enter') {
+   if (event.key !== 'Enter') return
     const inputElement = event.target;
 
     if (inputElement.contentEditable === 'true' ||
     inputElement.getAttribute('role') === 'textbox' ||
     inputElement.tagName === 'INPUT' ||
     inputElement.tagName === 'TEXTAREA') {
-      const text = inputElement.value;
+      const text = getTextContent(inputElement);
       let command;
       if (text.includes(COMMAND_PREFIX)) {
         const pattern = new RegExp(`(${COMMAND_PREFIX}[^${SUBMIT_KEY}]+)(?=${SUBMIT_KEY})`);
         const match = text.match(pattern);
+        console.log(pattern, match)
         if (match) {
-            
         event.preventDefault();
           command = match[1].trim();
         }
@@ -75,11 +77,11 @@ function handleKeyDown(event) {
         chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'language', 'model', 'copyToClipboard','gptCommand', 'commentCommand', 'useSurroundingText'], (options) => {
             COMMAND_PREFIX = options.gptCommand;
         SUBMIT_KEY = options.commentCommand;
-          processCommand(inputElement, command, options, false);
+        //   processCommand(inputElement, command, options, false);
         });
-      }
     }
-  }
+}
+  
 
 // Attach event listener to existing input and textarea elements
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
