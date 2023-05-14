@@ -1,5 +1,6 @@
 let COMMAND_PREFIX = "gptCommand";
 let SUBMIT_KEY = "commentCommand";
+let highlighted = "";
 
 // utils
 const getTextContent = el => el.value || el.textContent;
@@ -15,7 +16,6 @@ function processCommand(
   options,
   calledByAIButton = false
 ) {
-  console.log({ command });
   const query = COMMAND_PREFIX + ": " + command.trim();
 
   if (!options.apiKey || options.apiKey.trim() === "") {
@@ -33,8 +33,18 @@ function processCommand(
       }
       const valueKey = getTextValueKey(inputElement);
       const value = inputElement[valueKey];
-      console.log({ value });
-      if (options.replaceInput) {
+      console.log({
+        showBelow: options.showBelow,
+        value,
+        inputElement,
+        response
+      });
+      if (options.showBelow) {
+        const div = document.createElement("div");
+        div.textContent = response;
+        const parent = inputElement.parentElement;
+        parent.appendChild(div);
+      } else if (options.replaceInput) {
         if (value.includes(SUBMIT_KEY)) {
           let [beforeSubmitKey, afterSubmitKey] = value.split(SUBMIT_KEY);
           let [beforeCommandPrefix, afterCommandPrefix] =
@@ -85,11 +95,11 @@ function handleKeyDown(event) {
     const valueKey = getTextValueKey(inputElement);
     const text = inputElement[valueKey];
     let command;
-    console.log({ text });
     // Retrieve user preferences from local storage
     chrome.storage.local.get(
       [
         "apiKey",
+        "showBelow",
         "replaceInput",
         "tokenLimit",
         "briefing",
@@ -103,20 +113,16 @@ function handleKeyDown(event) {
       options => {
         COMMAND_PREFIX = options.gptCommand;
         SUBMIT_KEY = options.commentCommand;
-        console.log({ text, COMMAND_PREFIX });
         if (text.includes(COMMAND_PREFIX)) {
           const pattern = new RegExp(
             `(${COMMAND_PREFIX}[^${SUBMIT_KEY}]+)(?=${SUBMIT_KEY})`
           );
           const match = text.match(pattern);
-          console.log(pattern, match);
           if (match) {
-            console.log({ match });
             event.preventDefault();
             command = match[1].trim();
           }
         }
-        console.log({ command });
         processCommand(inputElement, command, options, false);
       }
     );
@@ -355,6 +361,7 @@ function createAIButton(inputElement) {
     chrome.storage.local.get(
       [
         "apiKey",
+        "showBelow",
         "replaceInput",
         "tokenLimit",
         "briefing",
@@ -415,3 +422,24 @@ function showErrorNotification(message) {
     document.body.removeChild(notification);
   }, 5000);
 }
+
+// oncontextmenu
+const allElements = document.querySelectorAll("*");
+document.addEventListener("mouseup", e => {
+  let text = "";
+  if (window.getSelection) {
+    text = window.getSelection().toString();
+  } else if (document.selection && document.selection.type != "Control") {
+    text = document.selection.createRange().text;
+  }
+  highlighted = text;
+});
+document.addEventListener("contextmenu", e => 
+chrome.storage.local.get(null, function(items) {
+  // Modify the value of briefing
+  items.briefing = items.briefing+ " ."+highlighted;
+
+  // Save the updated values back to storage
+  chrome.storage.local.set(items);
+})
+);
