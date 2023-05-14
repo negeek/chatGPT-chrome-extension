@@ -96,36 +96,24 @@ function handleKeyDown(event) {
     const text = inputElement[valueKey];
     let command;
     // Retrieve user preferences from local storage
-    chrome.storage.local.get(
-      [
-        "apiKey",
-        "showBelow",
-        "replaceInput",
-        "tokenLimit",
-        "briefing",
-        "language",
-        "model",
-        "copyToClipboard",
-        "gptCommand",
-        "commentCommand",
-        "useSurroundingText"
-      ],
-      options => {
-        COMMAND_PREFIX = options.gptCommand;
-        SUBMIT_KEY = options.commentCommand;
-        if (text.includes(COMMAND_PREFIX)) {
-          const pattern = new RegExp(
-            `(${COMMAND_PREFIX}[^${SUBMIT_KEY}]+)(?=${SUBMIT_KEY})`
-          );
-          const match = text.match(pattern);
-          if (match) {
-            event.preventDefault();
-            command = match[1].trim();
-          }
-        }
-        processCommand(inputElement, command, options, false);
-      }
+    chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing','pdfbriefing', 'language', 'model', 'copyToClipboard','gptCommand', 'commentCommand', 'useSurroundingText'], (options) => {
+      COMMAND_PREFIX = options.gptCommand;
+  SUBMIT_KEY = options.commentCommand;
+  if (text.includes(COMMAND_PREFIX)) {
+    const pattern = new RegExp(
+      `(${COMMAND_PREFIX}[^${SUBMIT_KEY}]+)(?=${SUBMIT_KEY})`
     );
+    const match = text.match(pattern);
+    if (match) {
+      event.preventDefault();
+      command = match[1].trim();
+    }
+  }
+  processCommand(inputElement, command, options, false);
+}
+);
+
+       
   }
 }
 
@@ -172,6 +160,7 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
   const API_KEY = options.apiKey;
   const output_length = parseInt(options.tokenLimit, 10);
   const briefing = options.briefing;
+  const pdfbriefing=options.pdfbriefing
   const language = options.language;
   const model = options.model; // Added this line
 
@@ -220,7 +209,15 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
     });
   }
 
-  // Check if the 'useSurroundingText' option is enabled
+  if (pdfbriefing){
+    messages.unshift({
+      role: 'user',
+      content: `Another Very important information you need to remember: ${pdfbriefing} `,
+    });
+
+  }
+    
+    // Check if the 'useSurroundingText' option is enabled
   if (options.useSurroundingText && !isCalledByAIButton) {
     const valueKey = getTextValueKey(inputElement);
     const fullText = inputElement[valueKey];
@@ -339,12 +336,14 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
 
 // New function to create the AI button
 function createAIButton(inputElement) {
-  chrome.storage.local.get(["hideAiButtons"], ({ hideAiButtons }) => {
-    if (hideAiButtons) {
-      // Remove any existing AI buttons
-      const existingAIButtons = document.querySelectorAll(".chatgpt-ai-button");
-      existingAIButtons.forEach(button => button.remove());
-    }
+    chrome.storage.local.get(['hideAiButtons'], ({ hideAiButtons }) => {
+  
+    if (hideAiButtons)
+        {
+            // Remove any existing AI buttons
+  const existingAIButtons = document.querySelectorAll('.chatgpt-ai-button');
+  existingAIButtons.forEach((button) => button.remove());
+        }
   });
   const aiButton = document.createElement("button");
   aiButton.innerHTML = "AI";
@@ -358,22 +357,7 @@ function createAIButton(inputElement) {
     const text = inputElement[valueKey];
 
     // Retrieve user preferences from local storage
-    chrome.storage.local.get(
-      [
-        "apiKey",
-        "showBelow",
-        "replaceInput",
-        "tokenLimit",
-        "briefing",
-        "language",
-        "model",
-        "copyToClipboard",
-        "gptCommand",
-        "commentCommand",
-        "aiButtonName",
-        "useSurroundingText"
-      ],
-      options => {
+      chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
         COMMAND_PREFIX = options.gptCommand;
         SUBMIT_KEY = options.commentCommand;
         // Wrap the callback with an anonymous function
