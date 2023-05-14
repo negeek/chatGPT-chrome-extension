@@ -33,12 +33,6 @@ function processCommand(
       }
       const valueKey = getTextValueKey(inputElement);
       const value = inputElement[valueKey];
-      console.log({
-        showBelow: options.showBelow,
-        value,
-        inputElement,
-        response
-      });
       if (options.showBelow) {
         const div = document.createElement("div");
         div.textContent = response;
@@ -227,7 +221,7 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
      
       messages.push({
         role: 'user',
-        content: `Remember this content. It is from this site: ${options.url}. Part of its content is : ${joinedString} `,
+        content: `Remember this content. It is from a pdf: ${joinedString} `,
       });
       
       start +=Math.floor(words.length/10)
@@ -261,7 +255,7 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
     }
 
   }
-  console.log(messages)
+
     
     // Check if the 'useSurroundingText' option is enabled
   if (options.useSurroundingText && !isCalledByAIButton) {
