@@ -96,7 +96,7 @@ function handleKeyDown(event) {
     const text = inputElement[valueKey];
     let command;
     // Retrieve user preferences from local storage
-    chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing','pdfbriefing', 'language', 'model', 'copyToClipboard','gptCommand', 'commentCommand', 'useSurroundingText'], (options) => {
+    chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing','pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand', 'commentCommand', 'useSurroundingText'], (options) => {
       COMMAND_PREFIX = options.gptCommand;
   SUBMIT_KEY = options.commentCommand;
   if (text.includes(COMMAND_PREFIX)) {
@@ -160,6 +160,7 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
   const API_KEY = options.apiKey;
   const output_length = parseInt(options.tokenLimit, 10);
   const briefing = options.briefing;
+  const urlbriefing=options.urlbriefing
   const pdfbriefing=options.pdfbriefing
   const language = options.language;
   const model = options.model; // Added this line
@@ -210,12 +211,57 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
   }
 
   if (pdfbriefing){
-    messages.unshift({
-      role: 'user',
-      content: `Another Very important information you need to remember: ${pdfbriefing} `,
-    });
+    // feed in batches
+    // Remove leading/trailing white space
+    str = pdfbriefing.trim();
+    // Split the string by space
+    const words = str.split(" ");
+    // Return the count of words
+    let start = 0; // Start index for the current chunk
+    
+    chunkSize=Math.floor(options.tokenLimit/10)
+    while (start < words.length) {
+      const chunk = words.slice(start, start + chunkSize); // Get a chunk of words
+      const joinedString = chunk.join(" "); // Join the words with a space
+
+     
+      messages.push({
+        role: 'user',
+        content: `Remember this content. It is from this site: ${options.url}. Part of its content is : ${joinedString} `,
+      });
+      
+      start +=Math.floor(words.length/10)
+     
+    }
+    
+  }
+  
+
+  if (urlbriefing){
+    // feed in batches
+    // Remove leading/trailing white space
+    str = urlbriefing.trim();
+    // Split the string by space
+    const words = str.split(" ");
+    // Return the count of words
+    let start = 0; // Start index for the current chunk
+    chunkSize=Math.floor(options.tokenLimit/10)
+    // get like max 10 parts of the content. It should be enough
+    while (start < words.length) {
+      const chunk = words.slice(start, start + chunkSize); // Get a chunk of words
+      const joinedString = chunk.join(" "); // Join the words with a space
+
+     
+      messages.push({
+        role: 'user',
+        content: `Remember this content. It is from this site: ${options.url}. Part of its content is : ${joinedString} `,
+      });
+      
+      start += Math.floor(words.length/10)
+    }
 
   }
+  console.log(messages)
     
     // Check if the 'useSurroundingText' option is enabled
   if (options.useSurroundingText && !isCalledByAIButton) {
@@ -357,7 +403,7 @@ function createAIButton(inputElement) {
     const text = inputElement[valueKey];
 
     // Retrieve user preferences from local storage
-      chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
+      chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
         COMMAND_PREFIX = options.gptCommand;
         SUBMIT_KEY = options.commentCommand;
         // Wrap the callback with an anonymous function

@@ -1,4 +1,3 @@
-console.log("hello!!!!!")
 document.addEventListener('DOMContentLoaded', () => {
 
      
@@ -11,6 +10,8 @@ chrome.storage.local.get({
   tokenLimit: 100,
   briefing: '',
   pdfbriefing:'',
+  urlbriefing:'',
+  url:'',
   language: 'en',
     model: 'gpt-4',
     copyToClipboard: false,
@@ -32,6 +33,7 @@ chrome.storage.local.get({
   document.getElementById('tokenLimit').value = result.tokenLimit;
   document.getElementById('briefing').value = result.briefing;
   document.getElementById('pdfbriefing').files[0] = result.pdfbriefing;
+  document.getElementById('urlbriefing').value = result.urlbriefing;
   document.getElementById('language').value = result.language;
   document.getElementById('model').value = result.model;
     document.getElementById('copyToClipboard').checked = result.copyToClipboard;
@@ -53,6 +55,7 @@ chrome.storage.local.get({
     const showBelow = document.getElementById("showBelow").checked;
     const tokenLimit = document.getElementById('tokenLimit').value;
     const briefing = document.getElementById('briefing').value;
+    let urlbriefing = document.getElementById('urlbriefing').value;
     const language = document.getElementById('language').value;
   const model = document.getElementById('model').value;
     const copyToClipboard = document.getElementById('copyToClipboard').checked;
@@ -62,18 +65,112 @@ chrome.storage.local.get({
   const aiButtonName = document.getElementById('aiButtonName').value;
   const useSurroundingText = document.getElementById('useSurroundingText').checked;
   const pdf = document.getElementById('pdfbriefing').files[0];
-  console.log("hello")
-  if (typeof pdf !== 'undefined') {
- loadPDF(pdf).then(text=>{pdfText=text;
-  setChromeStorage(pdfText)
-}).catch(error => {
-  console.error(error);
-});}else{
-  setChromeStorage()
-}
+  const url= urlbriefing
+  // scrape the url and extract pdf text
+  if (typeof urlbriefing !== 'undefined'){
+    
+  fetch(urlbriefing)
+  .then(response => response.text())
+  .then(html => {
+    //console.log(html)
+    const container = document.createElement('div');
+    container.innerHTML = html;
+
+    let usefulInfo=""
+    let uniqueContent = [];
+
+    // Modify the code below to target specific tags containing useful information
+    const headings = container.querySelectorAll('h1, h2, h3','h4','h5','h6'); // Example: Extract all headings
+    headings.forEach(heading => {
+      const content = heading.innerText;
+      if (!uniqueContent.includes(content)) {
+        usefulInfo += content + "\n";
+        uniqueContent.push(content);
+      }
+    });
+
+    const paragraphs = container.querySelectorAll('p'); // Example: Extract all paragraphs
+    paragraphs.forEach(paragraph => {
+      const content = paragraph.innerText;
+      if (!uniqueContent.includes(content)) {
+        usefulInfo += content + "\n";
+        uniqueContent.push(content);
+      }
+    });
+
+    const link = container.querySelectorAll('a'); // Example: Extract all paragraphs
+    link.forEach(paragraph => {
+      const content = paragraph.innerText;
+      if (!uniqueContent.includes(content)) {
+        usefulInfo += content + "\n";
+        uniqueContent.push(content);
+      }
+      
+    });
+    const spantext = container.querySelectorAll('span'); // Example: Extract all paragraphs
+    spantext.forEach(paragraph => {
+      const content = paragraph.innerText;
+      if (!uniqueContent.includes(content)) {
+        usefulInfo += content + "\n";
+        uniqueContent.push(content);
+      }
+      
+    });
+    const divtext = container.querySelectorAll('div'); // Example: Extract all paragraphs
+    divtext.forEach(paragraph => {
+      const content = paragraph.innerText;
+      if (!uniqueContent.includes(content)) {
+        usefulInfo += content + "\n";
+        uniqueContent.push(content);
+      }
+      
+    });
+    const table = container.querySelectorAll('li'); // Example: Extract all paragraphs
+    table.forEach(paragraph => {
+      const content = paragraph.innerText;
+      if (!uniqueContent.includes(content)) {
+        usefulInfo += content + "\n";
+        uniqueContent.push(content);
+      }
+      
+    });
+    
+
+    if (typeof pdf !== 'undefined') {
+      loadPDF(pdf).then(text=>{pdfText=text;
+        console.log("both")
+       setChromeStorage(pdfText,usefulInfo)
+     }).catch(error => {
+       Promise.reject(error);
+     });}else{
+      console.log("urlonly")
+       setChromeStorage("",usefulInfo)
+     }
+
+
+   // You can add more queries to target other useful tags
+    
+
+  })
+  .catch(error => {
+    Promise.reject(error);
+  });}
+  else{
+    if (typeof pdf !== 'undefined') {
+      loadPDF(pdf).then(text=>{pdfText=text;
+       setChromeStorage(pdfbriefing=pdfText, urlbriefing="")
+     }).catch(error => {
+       Promise.reject(error);
+     });}else{
+      console.log("empty")
+       setChromeStorage()
+     }
+
+  }
+
 
     // Save user preferences in local storage(
-  function setChromeStorage(pdfbriefing=""){
+  function setChromeStorage(pdfbriefing="", urlbriefing=""){
     chrome.storage.local.set({
       apiKey,
       showBelow,
@@ -81,6 +178,8 @@ chrome.storage.local.get({
       tokenLimit,
       briefing,
       pdfbriefing,
+      urlbriefing,
+      url,
       language,
         model,
         copyToClipboard,
@@ -92,6 +191,8 @@ chrome.storage.local.get({
     });}
 
   });
+ 
+
     
     document.getElementById('suggestFeatureBtn').addEventListener('click', () => {
     window.open(`mailto:hi@mantasdigital.com?subject=Feature request for ChatGPT Browser Integration`);
@@ -118,6 +219,8 @@ document.getElementById('resetDefaults').addEventListener('click', (event) => {
   tokenLimit: 100,
   briefing: '',
   pdfbriefing:'',
+  urlbriefing:'',
+  url:'',
   language: 'en',
     model: 'gpt-4',
       copyToClipboard: false,
@@ -197,3 +300,6 @@ function renderPDF(data) {
     });
   });
 }
+
+
+
