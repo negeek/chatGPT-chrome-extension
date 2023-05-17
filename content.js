@@ -16,9 +16,15 @@ function processCommand(
   options,
   calledByAIButton = false
 ) {
+  // Show loader
+  const loader = document.createElement("div");
+loader.classList.add("chatgpt-loader");
+inputElement.parentNode.appendChild(loader);
+
   const query = COMMAND_PREFIX + ": " + command.trim();
 
   if (!options.apiKey || options.apiKey.trim() === "") {
+    loader.remove();
     showErrorNotification(
       "Error: API key is missing. Please enter your API key in the extension settings."
     );
@@ -29,45 +35,52 @@ function processCommand(
   fetchChatGPT(query, options, inputElement, calledByAIButton)
     .then(response => {
       if (options.copyToClipboard) {
+        loader.remove();
         copyTextToClipboard(response);
       }
       const valueKey = getTextValueKey(inputElement);
       const value = inputElement[valueKey];
       // showBelow helps to force text in the input field. Useful in case of facebook
       if (options.showBelow) {
+        loader.remove();
         // Create a span element to display the response
       const responseSpan = document.createElement("span");
       responseSpan.textContent = response;
 
       // Insert the response span element next to the input element
       inputElement.parentNode.insertBefore(responseSpan, inputElement.nextSibling);
-      } if (options.replaceInput) {
+      } else if (options.replaceInput) {
         if (value.includes(SUBMIT_KEY)) {
           let [beforeSubmitKey, afterSubmitKey] = value.split(SUBMIT_KEY);
           let [beforeCommandPrefix, afterCommandPrefix] =
             value.split(COMMAND_PREFIX);
           // Insert the response in between the two parts
+          loader.remove();
           inputElement[
             valueKey
           ] = `${beforeCommandPrefix}${response}${afterSubmitKey}`;
         } else {
+          loader.remove();
           inputElement[valueKey] = response;
         }
       } else {
         if (value.includes(SUBMIT_KEY)) {
-          let [beforeSubmitKey, afterSubmitKey] = value.split(SUBMIT_KEY);
 
+          let [beforeSubmitKey, afterSubmitKey] = value.split(SUBMIT_KEY);
+          loader.remove();
           // Insert the response in between the two parts
           inputElement[
             valueKey
           ] = `${beforeSubmitKey}${SUBMIT_KEY} ${response}${afterSubmitKey}`;
         } else {
+          loader.remove();
           inputElement[valueKey] += ` ${response}`;
         }
       }
      
     })
     .catch(error => {
+      loader.remove();
       console.error("Error fetching GPT response:", error);
       showErrorNotification("Error: API key is invalid.");
     });
@@ -204,7 +217,7 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
   if (briefing) {
     messages.unshift({
       role: "user",
-      content: `Very important information you need to remember: ${briefing} `
+      content: `Remember this content in case the user asks a question about it. When user asks question about this reply like it is a prompt: ${briefing} `
     });
   }
 

@@ -161,7 +161,6 @@ chrome.storage.local.get({
     if (typeof pdf !== 'undefined') {
       loadPDF(pdf).then(text=>{pdfText=text;
         console.log("pdf only")
-        console.log(pdfText)
        setChromeStorage(pdfText,"")
      }).catch(error => {
        Promise.reject(error);
@@ -308,3 +307,14 @@ function renderPDF(data) {
 
 
 
+document.addEventListener('click', function(event) {
+  if (event.target.matches('#increaseButton')) {
+    increaseSize();
+  }
+});
+
+function increaseSize() {
+  var inputField = document.getElementById('briefing');
+  inputField.style.width = (inputField.offsetWidth + 2) + 'px';
+  inputField.style.height = (inputField.offsetHeight + 10) + 'px';
+}
