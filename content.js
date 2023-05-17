@@ -28,17 +28,19 @@ function processCommand(
   // Call ChatGPT API and update the input value
   fetchChatGPT(query, options, inputElement, calledByAIButton)
     .then(response => {
-      console.log(options)
       if (options.copyToClipboard) {
         copyTextToClipboard(response);
       }
       const valueKey = getTextValueKey(inputElement);
       const value = inputElement[valueKey];
+      // showBelow helps to force text in the input field. Useful in case of facebook
       if (options.showBelow) {
-        const div = document.createElement("div");
-        div.textContent = response;
-        const parent = inputElement.parentElement;
-        parent.appendChild(div);
+        // Create a span element to display the response
+      const responseSpan = document.createElement("span");
+      responseSpan.textContent = response;
+
+      // Insert the response span element next to the input element
+      inputElement.parentNode.insertBefore(responseSpan, inputElement.nextSibling);
       } if (options.replaceInput) {
         if (value.includes(SUBMIT_KEY)) {
           let [beforeSubmitKey, afterSubmitKey] = value.split(SUBMIT_KEY);
@@ -63,6 +65,7 @@ function processCommand(
           inputElement[valueKey] += ` ${response}`;
         }
       }
+     
     })
     .catch(error => {
       console.error("Error fetching GPT response:", error);
@@ -398,7 +401,7 @@ function createAIButton(inputElement) {
     const text = inputElement[valueKey];
 
     // Retrieve user preferences from local storage
-      chrome.storage.local.get(['showBeow','apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
+      chrome.storage.local.get(['showBelow','apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
         COMMAND_PREFIX = options.gptCommand;
         SUBMIT_KEY = options.commentCommand;
         // Wrap the callback with an anonymous function
