@@ -55,7 +55,7 @@ chrome.storage.local.get({
     const showBelow = document.getElementById("showBelow").checked;
     const tokenLimit = document.getElementById('tokenLimit').value;
     const briefing = document.getElementById('briefing').value;
-    let urlbriefing = document.getElementById('urlbriefing').value;
+    let url = document.getElementById('urlbriefing').value;
     const language = document.getElementById('language').value;
   const model = document.getElementById('model').value;
     const copyToClipboard = document.getElementById('copyToClipboard').checked;
@@ -65,11 +65,12 @@ chrome.storage.local.get({
   const aiButtonName = document.getElementById('aiButtonName').value;
   const useSurroundingText = document.getElementById('useSurroundingText').checked;
   const pdf = document.getElementById('pdfbriefing').files[0];
-  const url= urlbriefing
+  const urlplaceholder=url
   // scrape the url and extract pdf text
-  if (typeof urlbriefing !== 'undefined'){
-    
-  fetch(urlbriefing)
+  console.log("pdf:", typeof(pdf))
+  if (url != ""){
+    console.log(" there is url")
+  fetch(urlplaceholder)
   .then(response => response.text())
   .then(html => {
     //console.log(html)
@@ -89,7 +90,7 @@ chrome.storage.local.get({
       }
     });
 
-    const paragraphs = container.querySelectorAll('p'); // Example: Extract all paragraphs
+    const paragraphs = container.querySelectorAll('p');
     paragraphs.forEach(paragraph => {
       const content = paragraph.innerText;
       if (!uniqueContent.includes(content)) {
@@ -98,7 +99,7 @@ chrome.storage.local.get({
       }
     });
 
-    const link = container.querySelectorAll('a'); // Example: Extract all paragraphs
+    const link = container.querySelectorAll('a'); 
     link.forEach(paragraph => {
       const content = paragraph.innerText;
       if (!uniqueContent.includes(content)) {
@@ -107,7 +108,7 @@ chrome.storage.local.get({
       }
       
     });
-    const spantext = container.querySelectorAll('span'); // Example: Extract all paragraphs
+    const spantext = container.querySelectorAll('span'); 
     spantext.forEach(paragraph => {
       const content = paragraph.innerText;
       if (!uniqueContent.includes(content)) {
@@ -116,7 +117,7 @@ chrome.storage.local.get({
       }
       
     });
-    const divtext = container.querySelectorAll('div'); // Example: Extract all paragraphs
+    const divtext = container.querySelectorAll('div'); 
     divtext.forEach(paragraph => {
       const content = paragraph.innerText;
       if (!uniqueContent.includes(content)) {
@@ -125,7 +126,7 @@ chrome.storage.local.get({
       }
       
     });
-    const table = container.querySelectorAll('li'); // Example: Extract all paragraphs
+    const table = container.querySelectorAll('li'); 
     table.forEach(paragraph => {
       const content = paragraph.innerText;
       if (!uniqueContent.includes(content)) {
@@ -156,13 +157,16 @@ chrome.storage.local.get({
     Promise.reject(error);
   });}
   else{
+    console.log("no url")
     if (typeof pdf !== 'undefined') {
       loadPDF(pdf).then(text=>{pdfText=text;
-       setChromeStorage(pdfbriefing=pdfText, urlbriefing="")
+        console.log("pdf only")
+        console.log(pdfText)
+       setChromeStorage(pdfText,"")
      }).catch(error => {
        Promise.reject(error);
      });}else{
-      console.log("empty")
+      console.log("no pdf no url")
        setChromeStorage()
      }
 
@@ -170,7 +174,8 @@ chrome.storage.local.get({
 
 
     // Save user preferences in local storage(
-  function setChromeStorage(pdfbriefing="", urlbriefing=""){
+  function setChromeStorage(pdfbriefing="", urltext=""){
+    console.log(url)
     chrome.storage.local.set({
       apiKey,
       showBelow,
@@ -178,7 +183,7 @@ chrome.storage.local.get({
       tokenLimit,
       briefing,
       pdfbriefing,
-      urlbriefing,
+      urlbriefing:urltext,
       url,
       language,
         model,

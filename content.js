@@ -1,6 +1,6 @@
 let COMMAND_PREFIX = "gptCommand";
 let SUBMIT_KEY = "commentCommand";
-let highlighted = "";
+
 
 // utils
 const getTextContent = el => el.value || el.textContent;
@@ -33,12 +33,15 @@ function processCommand(
       }
       const valueKey = getTextValueKey(inputElement);
       const value = inputElement[valueKey];
+      // showBelow helps to force text in the input field. Useful in case of facebook
       if (options.showBelow) {
-        const div = document.createElement("div");
-        div.textContent = response;
-        const parent = inputElement.parentElement;
-        parent.appendChild(div);
-      } else if (options.replaceInput) {
+        // Create a span element to display the response
+      const responseSpan = document.createElement("span");
+      responseSpan.textContent = response;
+
+      // Insert the response span element next to the input element
+      inputElement.parentNode.insertBefore(responseSpan, inputElement.nextSibling);
+      } if (options.replaceInput) {
         if (value.includes(SUBMIT_KEY)) {
           let [beforeSubmitKey, afterSubmitKey] = value.split(SUBMIT_KEY);
           let [beforeCommandPrefix, afterCommandPrefix] =
@@ -62,6 +65,7 @@ function processCommand(
           inputElement[valueKey] += ` ${response}`;
         }
       }
+     
     })
     .catch(error => {
       console.error("Error fetching GPT response:", error);
@@ -90,7 +94,7 @@ function handleKeyDown(event) {
     const text = inputElement[valueKey];
     let command;
     // Retrieve user preferences from local storage
-    chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing','pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand', 'commentCommand', 'useSurroundingText'], (options) => {
+    chrome.storage.local.get(['showBelow','apiKey', 'replaceInput', 'tokenLimit', 'briefing','pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand', 'commentCommand', 'useSurroundingText'], (options) => {
       COMMAND_PREFIX = options.gptCommand;
   SUBMIT_KEY = options.commentCommand;
   if (text.includes(COMMAND_PREFIX)) {
@@ -221,7 +225,7 @@ async function fetchChatGPT(query, options, inputElement, isCalledByAIButton) {
      
       messages.push({
         role: 'user',
-        content: `Remember this content. It is from a pdf: ${joinedString} `,
+        content: `Remember this content from a pdf: ${joinedString} `,
       });
       
       start +=Math.floor(words.length/10)
@@ -397,7 +401,7 @@ function createAIButton(inputElement) {
     const text = inputElement[valueKey];
 
     // Retrieve user preferences from local storage
-      chrome.storage.local.get(['apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
+      chrome.storage.local.get(['showBelow','apiKey', 'replaceInput', 'tokenLimit', 'briefing', 'pdfbriefing','urlbriefing','url','language', 'model', 'copyToClipboard','gptCommand','commentCommand','aiButtonName', 'useSurroundingText',], (options) => {
         COMMAND_PREFIX = options.gptCommand;
         SUBMIT_KEY = options.commentCommand;
         // Wrap the callback with an anonymous function
@@ -447,23 +451,4 @@ function showErrorNotification(message) {
   }, 5000);
 }
 
-// oncontextmenu
-const allElements = document.querySelectorAll("*");
-document.addEventListener("mouseup", e => {
-  let text = "";
-  if (window.getSelection) {
-    text = window.getSelection().toString();
-  } else if (document.selection && document.selection.type != "Control") {
-    text = document.selection.createRange().text;
-  }
-  highlighted = text;
-});
-document.addEventListener("contextmenu", e => 
-chrome.storage.local.get(null, function(items) {
-  // Modify the value of briefing
-  items.briefing = items.briefing+ " ."+highlighted;
 
-  // Save the updated values back to storage
-  chrome.storage.local.set(items);
-})
-);
